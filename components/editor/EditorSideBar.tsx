@@ -135,7 +135,7 @@ const EditorSideBar = () => {
             // <Loader className=" animate-spin" />
             <FolderSkeleton />
           ) : (
-            <div className=" overflow-y-auto h-[600px]  custom-scrollbar ">
+            <div className="  overflow-y-auto h-[600px]  custom-scrollbar ">
               <FolderCreation
                 main
                 folderId={folderId}

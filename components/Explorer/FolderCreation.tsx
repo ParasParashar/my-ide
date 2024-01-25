@@ -1,7 +1,7 @@
 "use client";
 
 import { File, Folder } from "@prisma/client";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, CopyIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { LuFilePlus2 } from "react-icons/lu";
 import { HiOutlineFolderPlus } from "react-icons/hi2";
@@ -12,11 +12,14 @@ import { FaAlignLeft } from "react-icons/fa";
 import {
   createFileWithinFolder,
   createSubFolderWithinFolder,
+  pasteCopyFile,
+  pasteCutFolderAndFile,
 } from "@/actions/explorer";
 import FileCard from "./FileCard";
 import DropDownEdit from "./DropDownEdit";
 import { deleteFolderAndSubFolder, editFolderName } from "@/actions/folder";
 import { useRouter } from "next/navigation";
+import { useCopyId } from "@/hooks/useCopy";
 import { useRefresh } from "@/hooks/useRefreshFolder";
 
 interface folderCreation {
@@ -48,6 +51,7 @@ const FolderCreation = ({
     visible: false,
   });
   const { toggleRefresh } = useRefresh();
+  const { copiedId, setCopiedId } = useCopyId();
   const handleShow = (e: React.MouseEvent, value: boolean) => {
     e.stopPropagation();
     setDropDown(true);
@@ -76,7 +80,7 @@ const FolderCreation = ({
     }
   };
 
-  const handleInputHide = (e: React.MouseEvent<InputEvent>) => {
+  const handleInputHide = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsShow({ ...isShow, visible: false });
   };
@@ -104,6 +108,39 @@ const FolderCreation = ({
     }
   };
 
+  const handleCutFolderAndFile = (e: React.ChangeEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCopiedId({ id: folderId, type: "isCut" });
+  };
+  const handleCopyFolderAndFile = (e: React.ChangeEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCopiedId({ id: folderId, type: "isCopy" });
+  };
+
+  const handlePasteFolder = async (e: React.ChangeEvent, folderId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (copiedId.id.trim() === "") return;
+    if (copiedId.type === "isCut") {
+      await pasteCutFolderAndFile({
+        pasteFolderId: folderId,
+        copiedFolderId: copiedId.id,
+      });
+      setCopiedId({ id: "", type: undefined });
+      toggleRefresh();
+    } else {
+      await pasteCopyFile({
+        pasteFolderId: folderId,
+        copiedFolderId: copiedId.id,
+      });
+      toggleRefresh();
+      setCopiedId({ id: "", type: undefined });
+    }
+    setCopiedId({ id: "", type: undefined });
+  };
+
   useEffect(() => {
     const handleChangeName = (e: React.MouseEvent | MouseEvent) => {
       if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
@@ -118,10 +155,11 @@ const FolderCreation = ({
     <>
       <div className="flex flex-col relative transition-all animate-accordion-down duration-200 ease-in-out text-gray-200  ">
         <div
+          draggable
           style={{ paddingLeft: depth * 5 + "px" }}
           onClick={() => setDropDown(!dropDown)}
           className={cn(
-            "flex overflow-y-auto flex-1 w-full justify-between px-1 group/folder  hover:bg-[#193549] items-center  cursor-pointer transition-all duration-200 ease-in-out",
+            "flex  flex-1 w-full justify-between px-1 group/folder  hover:bg-[#193549] items-center  cursor-pointer transition-all duration-200 ease-in-out",
             main && "bg-[#193549]"
           )}
         >
@@ -167,6 +205,10 @@ const FolderCreation = ({
             <DropDownEdit
               handleDelete={() => handleDeleteFolder(folderId)}
               handleEdit={(e) => handleNameInputEnable(e)}
+              handleCut={(e) => handleCutFolderAndFile(e, folderId)}
+              handlePaste={(e) => handlePasteFolder(e, folderId)}
+              handleCopy={(e) => handleCopyFolderAndFile(e, folderId)}
+              type="editor"
             >
               <Button size={"icon2"} variant={"transpairent"}>
                 <HiOutlineDotsVertical size={20} />
@@ -174,7 +216,7 @@ const FolderCreation = ({
             </DropDownEdit>
           </div>
         </div>
-
+        {/* edit input field */}
         {isShow.visible && (
           <div className="flex items-center  transition-all duration-200 ease-in-out gap-x-1">
             {isShow.isFolder ? (

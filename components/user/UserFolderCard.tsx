@@ -87,7 +87,11 @@ const UserFolderCard = ({ name, id }: props) => {
             >
               {newName}
             </span>
-            <DropDownEdit handleDelete={handleDelete} handleEdit={handleEnable}>
+            <DropDownEdit
+              type="main"
+              handleDelete={handleDelete}
+              handleEdit={handleEnable}
+            >
               <Button variant={"transpairent"} size={"icon"}>
                 <HiDotsVertical size={20} className=" text-gray-200" />
               </Button>

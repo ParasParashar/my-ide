@@ -8,6 +8,8 @@ import { deleteFile, editFileName } from "@/actions/folder";
 import { useRouter } from "next/navigation";
 import useFileSelectionStore from "@/hooks/useFileSelectionStore";
 import { useRefresh } from "@/hooks/useRefreshFolder";
+import { useCopyId } from "@/hooks/useCopy";
+import { pasteCutFile } from "@/actions/explorer";
 
 type props = {
   name: string;
@@ -20,7 +22,7 @@ const FileCard = ({ name, id, mainFolderId, rootFolderId }: props) => {
   const [isEditName, setIsEditName] = useState(false);
   const [newName, setnewName] = useState(name);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const { copiedId, setCopiedId } = useCopyId();
   const { addSelectedFile, removeSelectedFile } = useFileSelectionStore();
 
   const onKeyDown = async (e: React.KeyboardEvent) => {
@@ -45,7 +47,16 @@ const FileCard = ({ name, id, mainFolderId, rootFolderId }: props) => {
     addSelectedFile(rootFolderId, { id: id, name: name });
     router.push(`/${rootFolderId}/${id}`);
   };
-
+  const handleCut = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCopiedId({ id: id, type: "isCut" });
+  };
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCopiedId({ id: id, type: "isCopy" });
+  };
   useEffect(() => {
     const handleClickOutside = (event: React.MouseEvent | MouseEvent) => {
       if (
@@ -79,7 +90,7 @@ const FileCard = ({ name, id, mainFolderId, rootFolderId }: props) => {
             value={newName}
             onChange={(e) => setnewName(e.target.value)}
             onKeyDown={onKeyDown}
-            className=" bg-transparent text-blue-600  w-full  border  outline-none "
+            className=" bg-transparent text-blue-600  w-full    outline-none "
           />
         ) : (
           <p className=" text-ellipsis  text-nowrap text-sm  font-semibold">
@@ -93,6 +104,9 @@ const FileCard = ({ name, id, mainFolderId, rootFolderId }: props) => {
           handleEdit={(e) => {
             handleNameInputEnable(e);
           }}
+          handleCut={(e) => handleCut(e)}
+          handleCopy={(e) => handleCopy(e)}
+          type="editor"
         >
           <Button size={"icon2"} variant={"transpairent"}>
             <HiOutlineDotsVertical size={20} />

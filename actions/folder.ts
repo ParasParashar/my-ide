@@ -1,10 +1,8 @@
 'use server'
 
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs"
 import { createOrFindUser } from "./user";
 import { revalidatePath } from "next/cache";
-import { emit } from "process";
 import { File, Folder } from "@prisma/client";
 
 
